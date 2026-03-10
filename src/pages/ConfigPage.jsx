@@ -6,16 +6,21 @@ import {
     NoticeBox,
     AlertBar,
     AlertStack,
-    Divider,
+    Tab,
+    TabBar,
     Tag,
+    Divider,
 } from '@dhis2/ui'
 import { ConfigFormRenderer } from '../components/ConfigFormRenderer.jsx'
 import { ImportExport } from '../components/ImportExport.jsx'
-import { useDatastoreKey, useUpdateDatastoreKey } from '../services/datastoreService.js'
-import styles from './ConfigPage.module.css'
+import {
+    useDatastoreKey,
+    useUpdateDatastoreKey,
+} from '../services/datastoreService.js'
 
 /**
  * ConfigPage — Generic page for editing a single datastore key.
+ * Uses TabBar to switch between the key's sections.
  *
  * Props:
  *   schema  - from configSchema.js (with .key, .label, .description, .sections)
@@ -28,15 +33,14 @@ export function ConfigPage({ schema }) {
 
     const [localData, setLocalData] = useState(null)
     const [isDirty, setIsDirty] = useState(false)
+    const [activeTab, setActiveTab] = useState(0)
     const [notifications, setNotifications] = useState([])
 
-    // Initialize local state from fetched data
     const effectiveData = localData !== null ? localData : data
 
     const handleSectionChange = useCallback(
         (sectionPath, newValue) => {
-            const currentData = effectiveData || {}
-            setLocalData({ ...currentData, [sectionPath]: newValue })
+            setLocalData({ ...(effectiveData || {}), [sectionPath]: newValue })
             setIsDirty(true)
         },
         [effectiveData]
@@ -55,10 +59,13 @@ export function ConfigPage({ schema }) {
             await save(effectiveData, !!data)
             setIsDirty(false)
             setLocalData(null)
-            addNotification('success', `${label} configuration saved successfully.`)
+            addNotification('success', `${label} saved successfully.`)
             refetch()
         } catch (err) {
-            addNotification('error', `Failed to save: ${err?.message || 'Unknown error'}`)
+            addNotification(
+                'error',
+                `Failed to save: ${err?.message || 'Unknown error'}`
+            )
         }
     }
 
@@ -75,9 +82,19 @@ export function ConfigPage({ schema }) {
 
     if (loading) {
         return (
-            <div className={styles.loadingContainer}>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '80px 24px',
+                    gap: '16px',
+                    color: '#6c7787',
+                }}
+            >
                 <CircularLoader />
-                <p>Loading {label} configuration...</p>
+                <p>Loading {label}...</p>
             </div>
         )
     }
@@ -90,24 +107,54 @@ export function ConfigPage({ schema }) {
         )
     }
 
-    const isNewKey = error?.httpStatusCode === 404 || (!loading && !data)
+    const isNewKey =
+        error?.httpStatusCode === 404 || (!loading && !data)
+    const activeSection = sections[activeTab]
+    const sectionValue =
+        effectiveData?.[activeSection?.path ?? activeSection?.id]
 
     return (
-        <div className={styles.page}>
-            {/* Header */}
-            <div className={styles.header}>
-                <div className={styles.headerLeft}>
-                    <h1 className={styles.pageTitle}>{label}</h1>
+        <div style={{ maxWidth: '960px' }}>
+            {/* Page header */}
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    gap: '16px',
+                    marginBottom: '12px',
+                    flexWrap: 'wrap',
+                }}
+            >
+                <div>
+                    <h1
+                        style={{
+                            fontSize: '20px',
+                            fontWeight: '600',
+                            color: '#212934',
+                            margin: '0 0 4px',
+                        }}
+                    >
+                        {label}
+                    </h1>
                     {description && (
-                        <p className={styles.pageDescription}>{description}</p>
+                        <p
+                            style={{
+                                fontSize: '13px',
+                                color: '#6c7787',
+                                margin: '0 0 8px',
+                            }}
+                        >
+                            {description}
+                        </p>
                     )}
-                    <div className={styles.headerMeta}>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         <Tag neutral dense>
-                            dataStore: community_redesign / {key}
+                            community_redesign / {key}
                         </Tag>
                         {isNewKey && (
                             <Tag negative dense>
-                                Key does not exist yet — will be created on save
+                                Key not yet set — will be created on save
                             </Tag>
                         )}
                         {isDirty && (
@@ -117,7 +164,8 @@ export function ConfigPage({ schema }) {
                         )}
                     </div>
                 </div>
-                <div className={styles.headerActions}>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <ImportExport
                         data={effectiveData}
                         configKey={key}
@@ -126,7 +174,7 @@ export function ConfigPage({ schema }) {
                     <ButtonStrip>
                         {isDirty && (
                             <Button secondary onClick={handleDiscard}>
-                                Discard Changes
+                                Discard
                             </Button>
                         )}
                         <Button
@@ -135,41 +183,49 @@ export function ConfigPage({ schema }) {
                             loading={isSaving}
                             disabled={!isDirty && !isNewKey}
                         >
-                            {isSaving ? 'Saving...' : 'Save Configuration'}
+                            {isSaving ? 'Saving...' : 'Save'}
                         </Button>
                     </ButtonStrip>
                 </div>
             </div>
 
-            <Divider />
-
-            {/* Save error */}
             {saveError && (
-                <NoticeBox error title="Save failed" className={styles.errorBox}>
+                <NoticeBox error title="Save failed" style={{ marginBottom: '12px' }}>
                     {saveError.message}
                 </NoticeBox>
             )}
 
-            {/* Sections */}
-            <div className={styles.sections}>
-                {sections.map((section, i) => {
-                    const sectionValue = effectiveData?.[section.path ?? section.id]
-                    return (
-                        <div key={section.id} className={styles.section}>
-                            <ConfigFormRenderer
-                                schema={section}
-                                value={sectionValue}
-                                onChange={(newValue) =>
-                                    handleSectionChange(
-                                        section.path ?? section.id,
-                                        newValue
-                                    )
-                                }
-                            />
-                            {i < sections.length - 1 && <Divider />}
-                        </div>
-                    )
-                })}
+            {/* Tabs — one per section */}
+            {sections.length > 1 && (
+                <TabBar>
+                    {sections.map((section, i) => (
+                        <Tab
+                            key={section.id}
+                            selected={activeTab === i}
+                            onClick={() => setActiveTab(i)}
+                        >
+                            {section.label}
+                        </Tab>
+                    ))}
+                </TabBar>
+            )}
+
+            <Divider />
+
+            {/* Active section form */}
+            <div style={{ paddingTop: '16px' }}>
+                {activeSection && (
+                    <ConfigFormRenderer
+                        schema={activeSection}
+                        value={sectionValue}
+                        onChange={(newValue) =>
+                            handleSectionChange(
+                                activeSection.path ?? activeSection.id,
+                                newValue
+                            )
+                        }
+                    />
+                )}
             </div>
 
             {/* Notification stack */}

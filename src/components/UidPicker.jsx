@@ -9,21 +9,9 @@ import {
     Tag,
 } from '@dhis2/ui'
 import { useMetadata } from '../services/metadataResolver.js'
-import styles from './UidPicker.module.css'
 
 /**
- * UidPicker — A DHIS2-metadata-backed UID selector.
- *
- * Props:
- *   resourceKey  - Key from DHIS2_RESOURCES (e.g. 'programs', 'trackedEntityAttributes')
- *   value        - Currently selected UID (string) or array of UIDs (for multi)
- *   onChange     - Called with (uid) or ([uid, ...]) on selection
- *   multi        - If true, renders a multi-select
- *   label        - Label text (shown above)
- *   required     - Shows required indicator
- *   disabled     - Disables the control
- *   helpText     - Additional help text
- *   placeholder  - Placeholder text
+ * UidPicker — DHIS2-metadata-backed UID selector.
  */
 export function UidPicker({
     resourceKey,
@@ -38,21 +26,46 @@ export function UidPicker({
 }) {
     const { loading, error, items } = useMetadata(resourceKey)
 
-    const options = useMemo(
-        () =>
-            items.map((item) => ({
-                value: item.id,
-                label: `${item.displayName || item.name}`,
-                subLabel: item.id,
-            })),
-        [items]
-    )
+    const options = useMemo(() => {
+        if (!items) return []
+        const opts = items.map((item) => ({
+            value: item.id,
+            label: item.displayName || item.name || item.id,
+        }))
+
+        // Ensure current values exist in the options list to prevent DHIS2 UI crashes
+        const existingValues = new Set(opts.map((o) => o.value))
+
+        if (multi) {
+            const selectedValues = Array.isArray(value) ? value : value ? [value] : []
+            selectedValues.forEach(val => {
+                if (!existingValues.has(val)) {
+                    opts.push({ value: val, label: `[Unknown UID: ${val}]` })
+                }
+            })
+        } else {
+            if (value && !existingValues.has(value)) {
+                opts.push({ value: value, label: `[Unknown UID: ${value}]` })
+            }
+        }
+
+        return opts
+    }, [items, value, multi])
 
     if (loading) {
         return (
-            <div className={styles.loaderContainer}>
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 0',
+                    fontSize: '13px',
+                    color: '#6c7787',
+                }}
+            >
                 <CircularLoader small />
-                <span className={styles.loaderText}>Loading {resourceKey}...</span>
+                Loading {resourceKey}...
             </div>
         )
     }
@@ -60,13 +73,17 @@ export function UidPicker({
     if (error) {
         return (
             <NoticeBox error title="Failed to load options">
-                Could not fetch {resourceKey} from the server. Check your connection.
+                Could not fetch {resourceKey} from the server.
             </NoticeBox>
         )
     }
 
     if (multi) {
-        const selectedValues = Array.isArray(value) ? value : value ? [value] : []
+        const selectedValues = Array.isArray(value)
+            ? value
+            : value
+                ? [value]
+                : []
         return (
             <MultiSelect
                 label={label}
@@ -97,7 +114,7 @@ export function UidPicker({
                 selected={value || ''}
                 onChange={({ selected }) => onChange(selected)}
                 disabled={disabled}
-                placeholder={placeholder || `Select...`}
+                placeholder={placeholder || 'Select...'}
                 required={required}
                 helpText={helpText}
                 filterable
@@ -114,7 +131,7 @@ export function UidPicker({
                 ))}
             </SingleSelect>
             {value && (
-                <div className={styles.uidBadge}>
+                <div style={{ marginTop: '4px' }}>
                     <Tag neutral dense>
                         {value}
                     </Tag>

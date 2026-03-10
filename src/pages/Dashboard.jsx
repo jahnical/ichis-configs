@@ -1,18 +1,18 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
-    CircularLoader,
+    Card,
     Tag,
+    CircularLoader,
+    NoticeBox,
     IconSettings16,
     IconList16,
     IconLink16,
     IconCheckmark16,
     IconWarning16,
-    IconInfo16,
 } from '@dhis2/ui'
 import { useDatastoreNamespace } from '../services/datastoreService.js'
 import { ALL_SCHEMAS } from '../config/configSchema.js'
-import styles from './Dashboard.module.css'
 
 const ROUTE_MAP = {
     workflow: '/workflow',
@@ -28,122 +28,212 @@ const ICON_MAP = {
     relationship: <IconLink16 />,
 }
 
-const COLOR_MAP = {
+const COLORS = {
     workflow: '#1a73e8',
-    tasking: '#0f9d58',
-    taskProgramConfiguration: '#f4511e',
-    relationship: '#9c27b0',
+    tasking: '#00796b',
+    taskProgramConfiguration: '#e65100',
+    relationship: '#6a1b9a',
 }
 
 export function Dashboard() {
-    const { loading, error, keys } = useDatastoreNamespace()
+    const { loading, keys } = useDatastoreNamespace()
+    const navigate = useNavigate()
 
     return (
-        <div className={styles.page}>
-            <div className={styles.header}>
-                <h1 className={styles.title}>iCHIS Configuration Manager</h1>
-                <p className={styles.subtitle}>
-                    Manage iCHIS DHIS2 datastore configurations for the{' '}
-                    <code className={styles.code}>community_redesign</code> namespace.
-                    Click any section below to view and edit its configuration.
+        <div style={{ maxWidth: '960px' }}>
+            {/* Header */}
+            <div style={{ marginBottom: '24px' }}>
+                <h1
+                    style={{
+                        fontSize: '20px',
+                        fontWeight: '600',
+                        color: '#212934',
+                        margin: '0 0 6px',
+                    }}
+                >
+                    iCHIS Configuration Manager
+                </h1>
+                <p style={{ fontSize: '14px', color: '#6c7787', margin: 0 }}>
+                    Manage iCHIS configurations stored in the{' '}
+                    <code
+                        style={{
+                            fontFamily: 'monospace',
+                            background: '#f3f5f7',
+                            padding: '1px 5px',
+                            borderRadius: '3px',
+                        }}
+                    >
+                        community_redesign
+                    </code>{' '}
+                    datastore namespace. Click a section to configure it.
                 </p>
             </div>
 
             {loading && (
-                <div className={styles.loading}>
-                    <CircularLoader />
-                    <span>Checking datastore...</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <CircularLoader small />
+                    <span style={{ fontSize: '14px', color: '#6c7787' }}>
+                        Checking datastore...
+                    </span>
                 </div>
             )}
 
-            <div className={styles.grid}>
+            {/* Cards grid */}
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                    gap: '16px',
+                    marginBottom: '24px',
+                }}
+            >
                 {ALL_SCHEMAS.map((schema) => {
                     const exists = !loading && keys.includes(schema.key)
                     const route = ROUTE_MAP[schema.key]
-                    const color = COLOR_MAP[schema.key]
+                    const color = COLORS[schema.key]
 
                     return (
-                        <Link
+                        <div
                             key={schema.key}
-                            to={route}
-                            className={styles.cardLink}
+                            onClick={() => navigate(route)}
+                            style={{ cursor: 'pointer' }}
                         >
-                            <div
-                                className={styles.card}
-                                style={{ '--card-color': color }}
-                            >
-                                <div
-                                    className={styles.cardAccent}
-                                    style={{ background: color }}
-                                />
-                                <div className={styles.cardHeader}>
+                            <Card>
+                                <div style={{ padding: '16px' }}>
+                                    {/* Top accent bar */}
                                     <div
-                                        className={styles.cardIcon}
-                                        style={{ color }}
+                                        style={{
+                                            height: '3px',
+                                            background: color,
+                                            borderRadius: '2px',
+                                            marginBottom: '14px',
+                                        }}
+                                    />
+
+                                    {/* Icon + status */}
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            marginBottom: '12px',
+                                        }}
                                     >
-                                        {ICON_MAP[schema.key]}
+                                        <div style={{ color }}>{ICON_MAP[schema.key]}</div>
+                                        <div>
+                                            {loading ? (
+                                                <Tag neutral dense>
+                                                    Checking...
+                                                </Tag>
+                                            ) : exists ? (
+                                                <Tag positive dense>
+                                                    <span
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                        }}
+                                                    >
+                                                        <IconCheckmark16 /> Configured
+                                                    </span>
+                                                </Tag>
+                                            ) : (
+                                                <Tag negative dense>
+                                                    <span
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                        }}
+                                                    >
+                                                        <IconWarning16 /> Not set
+                                                    </span>
+                                                </Tag>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className={styles.cardStatus}>
-                                        {loading ? (
-                                            <Tag neutral dense>Checking...</Tag>
-                                        ) : exists ? (
-                                            <Tag positive dense>
-                                                <IconCheckmark16 /> Configured
+
+                                    {/* Title + description */}
+                                    <h2
+                                        style={{
+                                            fontSize: '15px',
+                                            fontWeight: '600',
+                                            color: '#212934',
+                                            margin: '0 0 6px',
+                                        }}
+                                    >
+                                        {schema.label}
+                                    </h2>
+                                    <p
+                                        style={{
+                                            fontSize: '13px',
+                                            color: '#6c7787',
+                                            margin: '0 0 12px',
+                                            lineHeight: '1.5',
+                                        }}
+                                    >
+                                        {schema.description}
+                                    </p>
+
+                                    {/* Section tags */}
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexWrap: 'wrap',
+                                            gap: '4px',
+                                            marginBottom: '12px',
+                                        }}
+                                    >
+                                        {schema.sections.map((s) => (
+                                            <Tag key={s.id} neutral dense>
+                                                {s.label}
                                             </Tag>
-                                        ) : (
-                                            <Tag negative dense>
-                                                <IconWarning16 /> Not Set
-                                            </Tag>
-                                        )}
+                                        ))}
                                     </div>
-                                </div>
 
-                                <h2 className={styles.cardTitle}>{schema.label}</h2>
-                                <p className={styles.cardDescription}>
-                                    {schema.description}
-                                </p>
-
-                                <div className={styles.cardMeta}>
-                                    <span className={styles.cardKey}>
-                                        Key: <code>{schema.key}</code>
-                                    </span>
-                                    <span className={styles.cardSections}>
-                                        {schema.sections.length} section
-                                        {schema.sections.length !== 1 ? 's' : ''}
-                                    </span>
-                                </div>
-
-                                <div className={styles.sectionList}>
-                                    {schema.sections.map((s) => (
-                                        <span key={s.id} className={styles.sectionChip}>
-                                            {s.label}
+                                    {/* Footer */}
+                                    <div
+                                        style={{
+                                            borderTop: '1px solid #e8edf2',
+                                            paddingTop: '10px',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <code
+                                            style={{
+                                                fontSize: '11px',
+                                                color: '#6c7787',
+                                                fontFamily: 'monospace',
+                                            }}
+                                        >
+                                            {schema.key}
+                                        </code>
+                                        <span
+                                            style={{
+                                                fontSize: '13px',
+                                                fontWeight: '600',
+                                                color: color,
+                                            }}
+                                        >
+                                            Configure →
                                         </span>
-                                    ))}
+                                    </div>
                                 </div>
-
-                                <div className={styles.cardFooter}>
-                                    <span className={styles.configure}>
-                                        Configure →
-                                    </span>
-                                </div>
-                            </div>
-                        </Link>
+                            </Card>
+                        </div>
                     )
                 })}
             </div>
 
-            <div className={styles.infoBox}>
-                <IconInfo16 />
-                <div>
-                    <strong>About iCHIS Config Manager</strong>
-                    <p>
-                        This app provides a graphical interface for managing iCHIS
-                        DHIS2 datastore configurations. Changes are validated and saved
-                        directly to the DHIS2 datastore. Use the Import/Export feature
-                        on each page for bulk updates or backup.
-                    </p>
-                </div>
-            </div>
+            {/* Info box */}
+            <NoticeBox title="About iCHIS Config Manager">
+                Provides a graphical interface for managing iCHIS DHIS2 datastore
+                configurations. Changes are saved directly to the{' '}
+                <code>community_redesign</code> datastore namespace. Use
+                Import/Export on each page for backups or bulk updates.
+            </NoticeBox>
         </div>
     )
 }

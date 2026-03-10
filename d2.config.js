@@ -9,7 +9,7 @@ const config = {
         app: './src/App.jsx',
     },
 
-    viteConfigExtensions: './viteConfigExtensions.mts',
+    //viteConfigExtensions: './viteConfigExtensions.mts',
 }
 
 module.exports = config

@@ -1,14 +1,14 @@
 import React from 'react'
 import {
     Button,
+    Card,
     InputField,
     SingleSelect,
     SingleSelectOption,
+    Tag,
     IconAdd16,
     IconDelete16,
-    Tag,
 } from '@dhis2/ui'
-import styles from './ConditionEditor.module.css'
 
 const REF_OPTIONS = [
     { value: 'eventData', label: 'Event Data' },
@@ -25,21 +25,6 @@ const OP_OPTIONS = [
     { value: 'LESS_THAN', label: 'Less Than' },
 ]
 
-/**
- * ConditionEditor — Visual editor for trigger/completion condition arrays.
- *
- * A condition object looks like:
- * {
- *   lhs: { ref: 'eventData', uid: 'someUID' },
- *   op: 'EQUALS',
- *   rhs: { value: 'true' }
- * }
- *
- * Props:
- *   conditions  - array of condition objects
- *   onChange    - called with updated array
- *   label       - section label
- */
 export function ConditionEditor({ conditions = [], onChange, label }) {
     const defaultCondition = () => ({
         lhs: { ref: 'eventData', uid: '' },
@@ -47,60 +32,119 @@ export function ConditionEditor({ conditions = [], onChange, label }) {
         rhs: { value: '' },
     })
 
-    const update = (index, field, value) => {
+    const update = (index, path, val) => {
         const updated = conditions.map((c, i) => {
             if (i !== index) return c
-            if (field.startsWith('lhs.')) {
-                const key = field.replace('lhs.', '')
-                return { ...c, lhs: { ...c.lhs, [key]: value } }
+            if (path === 'lhs.ref') return { ...c, lhs: { ...c.lhs, ref: val } }
+            if (path === 'lhs.uid') return { ...c, lhs: { ...c.lhs, uid: val } }
+            if (path === 'rhs.mode') {
+                if (val === 'value') {
+                    return { ...c, rhs: { value: c.rhs?.value || '' } }
+                } else {
+                    return { ...c, rhs: { ref: 'eventData', uid: '' } }
+                }
             }
-            if (field.startsWith('rhs.')) {
-                const key = field.replace('rhs.', '')
-                return { ...c, rhs: { ...c.rhs, [key]: value } }
-            }
-            return { ...c, [field]: value }
+            if (path === 'rhs.ref') return { ...c, rhs: { ...c.rhs, ref: val } }
+            if (path === 'rhs.uid') return { ...c, rhs: { ...c.rhs, uid: val } }
+            if (path === 'rhs.value') return { ...c, rhs: { value: val } }
+            return { ...c, [path]: val }
         })
         onChange(updated)
     }
 
     const add = () => onChange([...conditions, defaultCondition()])
-
-    const remove = (index) =>
-        onChange(conditions.filter((_, i) => i !== index))
+    const remove = (i) => onChange(conditions.filter((_, idx) => idx !== i))
 
     return (
-        <div className={styles.container}>
-            {label && (
-                <div className={styles.header}>
-                    <span className={styles.label}>{label}</span>
-                    <Tag neutral dense>
-                        {conditions.length} condition{conditions.length !== 1 ? 's' : ''}
-                    </Tag>
-                </div>
-            )}
+        <div>
+            {/* Header row */}
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '10px',
+                }}
+            >
+                {label && (
+                    <span
+                        style={{
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: '#212934',
+                        }}
+                    >
+                        {label}
+                    </span>
+                )}
+                <Tag neutral dense>
+                    {conditions.length} condition{conditions.length !== 1 ? 's' : ''}
+                </Tag>
+            </div>
 
             {conditions.length === 0 && (
-                <p className={styles.empty}>
-                    No conditions — task applies unconditionally.
+                <p
+                    style={{
+                        fontSize: '13px',
+                        color: '#6c7787',
+                        fontStyle: 'italic',
+                        margin: '0 0 10px',
+                    }}
+                >
+                    No conditions — applies unconditionally.
                 </p>
             )}
 
             {conditions.map((cond, i) => (
-                <div key={i} className={styles.conditionRow}>
-                    <div className={styles.conditionIndex}>
-                        <Tag neutral dense>#{i + 1}</Tag>
+                <div
+                    key={i}
+                    style={{
+                        marginBottom: '12px',
+                        background: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        borderLeft: '4px solid #4a5568',
+                        borderRadius: '4px',
+                        padding: '12px',
+                    }}
+                >
+                    {/* Condition Header */}
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '12px',
+                        }}
+                    >
+                        <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#4a5568', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Condition {i + 1}
+                        </span>
+                        <Button
+                            small
+                            destructive
+                            secondary
+                            icon={<IconDelete16 />}
+                            onClick={() => remove(i)}
+                            title="Remove condition"
+                        >
+                            Remove
+                        </Button>
                     </div>
 
-                    <div className={styles.conditionFields}>
-                        {/* LHS ref */}
-                        <div className={styles.fieldGroup}>
+                    {/* Condition Inputs */}
+                    <div style={{ display: 'flex', alignItems: 'stretch', gap: '16px', flexWrap: 'wrap' }}>
+
+                        {/* LHS (Left Hand Side) */}
+                        <div style={{ flex: '1 1 30%', minWidth: '250px', display: 'flex', flexDirection: 'column', gap: '12px', background: '#f1f5f9', padding: '16px', borderRadius: '6px' }}>
+                            <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
+                                Left Hand Side (Source)
+                            </div>
                             <SingleSelect
                                 label="Data Source"
                                 selected={cond.lhs?.ref || ''}
                                 onChange={({ selected }) =>
                                     update(i, 'lhs.ref', selected)
                                 }
-                                dense
                             >
                                 {REF_OPTIONS.map((o) => (
                                     <SingleSelectOption
@@ -110,76 +154,104 @@ export function ConditionEditor({ conditions = [], onChange, label }) {
                                     />
                                 ))}
                             </SingleSelect>
-                        </div>
 
-                        {/* LHS uid */}
-                        <div className={styles.fieldGroup}>
                             <InputField
-                                label="Data Element / Attribute UID"
+                                label="Base UID"
                                 value={cond.lhs?.uid || ''}
                                 onChange={({ value }) =>
                                     update(i, 'lhs.uid', value)
                                 }
-                                dense
                                 placeholder="e.g. ggEeifB2HgC"
                             />
                         </div>
 
-                        {/* Operator */}
-                        <div className={styles.fieldGroup}>
-                            <SingleSelect
-                                label="Operator"
-                                selected={cond.op || ''}
-                                onChange={({ selected }) =>
-                                    update(i, 'op', selected)
-                                }
-                                dense
-                            >
-                                {OP_OPTIONS.map((o) => (
-                                    <SingleSelectOption
-                                        key={o.value}
-                                        value={o.value}
-                                        label={o.label}
-                                    />
-                                ))}
-                            </SingleSelect>
+                        {/* Operator (Middle) */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 0' }}>
+                            <div style={{ width: '200px' }}>
+                                <SingleSelect
+                                    label="Operator"
+                                    selected={cond.op || ''}
+                                    onChange={({ selected }) =>
+                                        update(i, 'op', selected)
+                                    }
+                                >
+                                    {OP_OPTIONS.map((o) => (
+                                        <SingleSelectOption
+                                            key={o.value}
+                                            value={o.value}
+                                            label={o.label}
+                                        />
+                                    ))}
+                                </SingleSelect>
+                            </div>
                         </div>
 
-                        {/* RHS value */}
-                        {cond.op !== 'NULL' && cond.op !== 'NOT_NULL' && (
-                            <div className={styles.fieldGroup}>
-                                <InputField
-                                    label="Value"
-                                    value={cond.rhs?.value || ''}
-                                    onChange={({ value }) =>
-                                        update(i, 'rhs.value', value)
+                        {/* RHS (Right Hand Side) */}
+                        {cond.op !== 'NULL' && cond.op !== 'NOT_NULL' ? (
+                            <div style={{ flex: '1 1 30%', minWidth: '250px', display: 'flex', flexDirection: 'column', gap: '12px', background: '#f1f5f9', padding: '16px', borderRadius: '6px' }}>
+                                <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
+                                    Right Hand Side (Target)
+                                </div>
+                                <SingleSelect
+                                    label="Compare To"
+                                    selected={cond.rhs?.ref ? 'reference' : 'value'}
+                                    onChange={({ selected }) =>
+                                        update(i, 'rhs.mode', selected)
                                     }
-                                    dense
-                                    placeholder="Expected value"
-                                />
+                                >
+                                    <SingleSelectOption value="value" label="Literal Value" />
+                                    <SingleSelectOption value="reference" label="Data Source Reference" />
+                                </SingleSelect>
+
+                                {cond.rhs?.ref ? (
+                                    <>
+                                        <SingleSelect
+                                            label="Target Source"
+                                            selected={cond.rhs?.ref || ''}
+                                            onChange={({ selected }) =>
+                                                update(i, 'rhs.ref', selected)
+                                            }
+                                        >
+                                            {REF_OPTIONS.map((o) => (
+                                                <SingleSelectOption
+                                                    key={o.value}
+                                                    value={o.value}
+                                                    label={o.label}
+                                                />
+                                            ))}
+                                        </SingleSelect>
+                                        <InputField
+                                            label="Target Base UID"
+                                            value={cond.rhs?.uid || ''}
+                                            onChange={({ value }) =>
+                                                update(i, 'rhs.uid', value)
+                                            }
+                                            placeholder="e.g. LAfiAKu70JZ"
+                                        />
+                                    </>
+                                ) : (
+                                    <InputField
+                                        label="Target Value"
+                                        value={cond.rhs?.value || ''}
+                                        onChange={({ value }) =>
+                                            update(i, 'rhs.value', value)
+                                        }
+                                        placeholder="Expected value"
+                                    />
+                                )}
+                            </div>
+                        ) : (
+                            <div style={{ flex: '1 1 30%', minWidth: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '16px', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
+                                <span style={{ color: '#94a3b8', fontSize: '13px', fontStyle: 'italic' }}>
+                                    (No right-hand side required for {cond.op === 'NULL' ? 'Is Null' : 'Is Not Null'})
+                                </span>
                             </div>
                         )}
-                    </div>
-
-                    <div className={styles.removeBtn}>
-                        <Button
-                            small
-                            destructive
-                            icon={<IconDelete16 />}
-                            onClick={() => remove(i)}
-                            title="Remove condition"
-                        />
                     </div>
                 </div>
             ))}
 
-            <Button
-                small
-                secondary
-                icon={<IconAdd16 />}
-                onClick={add}
-                className={styles.addBtn}
-            >
+            <Button secondary small icon={<IconAdd16 />} onClick={add}>
                 Add Condition
             </Button>
         </div>

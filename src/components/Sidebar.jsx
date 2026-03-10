@@ -1,13 +1,15 @@
 import React from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
+    Menu,
+    MenuItem,
+    MenuDivider,
+    MenuSectionHeader,
     IconApps16,
     IconSettings16,
     IconList16,
     IconLink16,
-    IconArrowRight16,
 } from '@dhis2/ui'
-import styles from './Sidebar.module.css'
 
 const NAV_ITEMS = [
     {
@@ -20,74 +22,82 @@ const NAV_ITEMS = [
         path: '/workflow',
         label: 'Workflow',
         icon: <IconSettings16 />,
-        description: 'Enrollment control & auto-creation',
     },
     {
         path: '/tasking',
         label: 'Tasking',
         icon: <IconList16 />,
-        description: 'Program tasks & conditions',
     },
     {
         path: '/task-program-config',
         label: 'Task Program Config',
         icon: <IconSettings16 />,
-        description: 'Option sets, relationships & types',
     },
     {
         path: '/relationships',
         label: 'Relationships',
         icon: <IconLink16 />,
-        description: 'Program relationship definitions',
     },
 ]
 
 export function Sidebar() {
     const location = useLocation()
+    const navigate = useNavigate()
 
     return (
-        <nav className={styles.sidebar}>
-            <div className={styles.brand}>
-                <div className={styles.brandIcon}>iC</div>
-                <div className={styles.brandText}>
-                    <span className={styles.brandName}>iCHIS</span>
-                    <span className={styles.brandSub}>Config Manager</span>
+        <div
+            style={{
+                width: '220px',
+                minWidth: '220px',
+                borderRight: '1px solid #e8edf2',
+                background: '#fff',
+                height: '100%',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+            }}
+        >
+            {/* App branding */}
+            <div
+                style={{
+                    padding: '16px 16px 12px',
+                    borderBottom: '1px solid #e8edf2',
+                }}
+            >
+                <div
+                    style={{
+                        fontSize: '15px',
+                        fontWeight: '600',
+                        color: '#212934',
+                    }}
+                >
+                    iCHIS Config
+                </div>
+                <div style={{ fontSize: '12px', color: '#6c7787', marginTop: '2px' }}>
+                    community_redesign
                 </div>
             </div>
 
-            <div className={styles.section}>
-                <span className={styles.sectionLabel}>Configuration</span>
+            {/* Navigation */}
+            <Menu dense>
+                <MenuSectionHeader label="Configuration" hideDivider />
                 {NAV_ITEMS.map((item) => {
-                    const isActive =
-                        item.exact
-                            ? location.pathname === item.path
-                            : location.pathname.startsWith(item.path)
+                    const isActive = item.exact
+                        ? location.pathname === item.path
+                        : location.pathname.startsWith(item.path)
 
                     return (
-                        <NavLink
+                        <MenuItem
                             key={item.path}
-                            to={item.path}
-                            className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
-                        >
-                            <span className={styles.navIcon}>{item.icon}</span>
-                            <span className={styles.navLabel}>{item.label}</span>
-                            {isActive && (
-                                <span className={styles.navArrow}>
-                                    <IconArrowRight16 />
-                                </span>
-                            )}
-                        </NavLink>
+                            label={item.label}
+                            icon={item.icon}
+                            active={isActive}
+                            onClick={() => navigate(item.path)}
+                        />
                     )
                 })}
-            </div>
-
-            <div className={styles.footer}>
-                <div className={styles.footerInfo}>
-                    <span className={styles.namespace}>community_redesign</span>
-                    <span className={styles.namespaceLabel}>Datastore Namespace</span>
-                </div>
-            </div>
-        </nav>
+            </Menu>
+        </div>
     )
 }
 

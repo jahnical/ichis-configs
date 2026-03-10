@@ -9,17 +9,9 @@ import {
     ModalActions,
     ButtonStrip,
     NoticeBox,
+    TextArea,
 } from '@dhis2/ui'
-import styles from './ImportExport.module.css'
 
-/**
- * ImportExport — Buttons to import/export a config value as JSON.
- *
- * Props:
- *   data       - current data to export
- *   configKey  - e.g. 'workflow' (used in filename)
- *   onImport   - called with parsed JSON when user imports
- */
 export function ImportExport({ data, configKey, onImport }) {
     const [showImport, setShowImport] = useState(false)
     const [importText, setImportText] = useState('')
@@ -61,9 +53,15 @@ export function ImportExport({ data, configKey, onImport }) {
         }
     }
 
+    const handleClose = () => {
+        setShowImport(false)
+        setImportText('')
+        setImportError(null)
+    }
+
     return (
         <>
-            <div className={styles.buttonGroup}>
+            <div style={{ display: 'flex', gap: '8px' }}>
                 <Button
                     small
                     secondary
@@ -84,15 +82,21 @@ export function ImportExport({ data, configKey, onImport }) {
             </div>
 
             {showImport && (
-                <Modal onClose={() => setShowImport(false)} large>
+                <Modal onClose={handleClose} large>
                     <ModalTitle>Import JSON Configuration</ModalTitle>
                     <ModalContent>
-                        <p className={styles.importInfo}>
-                            Upload a JSON file or paste the configuration below.
-                            This will replace the current configuration.
+                        <p
+                            style={{
+                                fontSize: '14px',
+                                color: '#4a5768',
+                                marginBottom: '16px',
+                            }}
+                        >
+                            Upload a JSON file or paste configuration below. This
+                            will replace the current configuration.
                         </p>
 
-                        <div className={styles.fileUpload}>
+                        <div style={{ marginBottom: '12px' }}>
                             <Button
                                 secondary
                                 small
@@ -105,49 +109,33 @@ export function ImportExport({ data, configKey, onImport }) {
                                 type="file"
                                 accept=".json"
                                 onChange={handleFileSelect}
-                                className={styles.hiddenInput}
+                                style={{ display: 'none' }}
                             />
                         </div>
 
-                        <textarea
-                            className={styles.jsonTextarea}
+                        <TextArea
                             value={importText}
-                            onChange={(e) => {
-                                setImportText(e.target.value)
+                            onChange={({ value }) => {
+                                setImportText(value)
                                 setImportError(null)
                             }}
                             placeholder="Or paste JSON here..."
-                            rows={16}
-                            spellCheck={false}
+                            rows={14}
+                            resize="vertical"
+                            style={{ fontFamily: 'monospace', fontSize: '12px' }}
                         />
 
                         {importError && (
-                            <NoticeBox error title="Parse Error">
-                                {importError}
-                            </NoticeBox>
-                        )}
-
-                        {importText && !importError && (
-                            <NoticeBox title="Preview">
-                                <pre className={styles.preview}>
-                                    {(() => {
-                                        try {
-                                            return JSON.stringify(
-                                                JSON.parse(importText),
-                                                null,
-                                                2
-                                            ).slice(0, 500) + (importText.length > 500 ? '\n...' : '')
-                                        } catch {
-                                            return importText.slice(0, 200)
-                                        }
-                                    })()}
-                                </pre>
-                            </NoticeBox>
+                            <div style={{ marginTop: '12px' }}>
+                                <NoticeBox error title="Parse Error">
+                                    {importError}
+                                </NoticeBox>
+                            </div>
                         )}
                     </ModalContent>
                     <ModalActions>
                         <ButtonStrip end>
-                            <Button secondary onClick={() => setShowImport(false)}>
+                            <Button secondary onClick={handleClose}>
                                 Cancel
                             </Button>
                             <Button
