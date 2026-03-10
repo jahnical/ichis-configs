@@ -11,9 +11,13 @@ import {
 } from '@dhis2/ui'
 
 const REF_OPTIONS = [
+    { value: 'literal', label: 'Literal Value' },
     { value: 'eventData', label: 'Event Data' },
     { value: 'allEventsData', label: 'All Events Data' },
     { value: 'attribute', label: 'TEI Attribute' },
+    { value: 'programIndicator', label: 'Program Indicator' },
+    { value: 'constant', label: 'Constant' },
+    { value: 'context', label: 'Context / Environment' },
 ]
 
 const OP_OPTIONS = [
@@ -37,6 +41,8 @@ export function ConditionEditor({ conditions = [], onChange, label }) {
             if (i !== index) return c
             if (path === 'lhs.ref') return { ...c, lhs: { ...c.lhs, ref: val } }
             if (path === 'lhs.uid') return { ...c, lhs: { ...c.lhs, uid: val } }
+            if (path === 'lhs.type') return { ...c, lhs: { ...c.lhs, type: val } }
+            if (path === 'lhs.fn') return { ...c, lhs: { ...c.lhs, fn: val } }
             if (path === 'rhs.mode') {
                 if (val === 'value') {
                     return { ...c, rhs: { value: c.rhs?.value || '' } }
@@ -46,7 +52,9 @@ export function ConditionEditor({ conditions = [], onChange, label }) {
             }
             if (path === 'rhs.ref') return { ...c, rhs: { ...c.rhs, ref: val } }
             if (path === 'rhs.uid') return { ...c, rhs: { ...c.rhs, uid: val } }
-            if (path === 'rhs.value') return { ...c, rhs: { value: val } }
+            if (path === 'rhs.value') return { ...c, rhs: { ...c.rhs, value: val } }
+            if (path === 'rhs.type') return { ...c, rhs: { ...c.rhs, type: val } }
+            if (path === 'rhs.fn') return { ...c, rhs: { ...c.rhs, fn: val } }
             return { ...c, [path]: val }
         })
         onChange(updated)
@@ -140,7 +148,7 @@ export function ConditionEditor({ conditions = [], onChange, label }) {
                                 Left Hand Side (Source)
                             </div>
                             <SingleSelect
-                                label="Data Source"
+                                label="Source Type"
                                 selected={cond.lhs?.ref || ''}
                                 onChange={({ selected }) =>
                                     update(i, 'lhs.ref', selected)
@@ -155,13 +163,42 @@ export function ConditionEditor({ conditions = [], onChange, label }) {
                                 ))}
                             </SingleSelect>
 
+                            {['literal', 'context', 'constant'].includes(cond.lhs?.ref) ? (
+                                <InputField
+                                    label={cond.lhs?.ref === 'literal' ? 'Value' : 'Code / Variable'}
+                                    value={cond.lhs?.value || ''}
+                                    onChange={({ value }) =>
+                                        update(i, 'lhs.value', value)
+                                    }
+                                    placeholder="Enter value"
+                                />
+                            ) : (
+                                <InputField
+                                    label="Base UID"
+                                    value={cond.lhs?.uid || ''}
+                                    onChange={({ value }) =>
+                                        update(i, 'lhs.uid', value)
+                                    }
+                                    placeholder="e.g. ggEeifB2HgC"
+                                />
+                            )}
+
                             <InputField
-                                label="Base UID"
-                                value={cond.lhs?.uid || ''}
+                                label="Type (Optional)"
+                                value={cond.lhs?.type || ''}
                                 onChange={({ value }) =>
-                                    update(i, 'lhs.uid', value)
+                                    update(i, 'lhs.type', value)
                                 }
-                                placeholder="e.g. ggEeifB2HgC"
+                                placeholder="e.g. integer, string"
+                            />
+
+                            <InputField
+                                label="Function (Optional)"
+                                value={cond.lhs?.fn || ''}
+                                onChange={({ value }) =>
+                                    update(i, 'lhs.fn', value)
+                                }
+                                placeholder="e.g. d2:hasValue(x)"
                             />
                         </div>
 
@@ -193,52 +230,58 @@ export function ConditionEditor({ conditions = [], onChange, label }) {
                                     Right Hand Side (Target)
                                 </div>
                                 <SingleSelect
-                                    label="Compare To"
-                                    selected={cond.rhs?.ref ? 'reference' : 'value'}
+                                    label="Target Source"
+                                    selected={cond.rhs?.ref || ''}
                                     onChange={({ selected }) =>
-                                        update(i, 'rhs.mode', selected)
+                                        update(i, 'rhs.ref', selected)
                                     }
                                 >
-                                    <SingleSelectOption value="value" label="Literal Value" />
-                                    <SingleSelectOption value="reference" label="Data Source Reference" />
+                                    {REF_OPTIONS.map((o) => (
+                                        <SingleSelectOption
+                                            key={o.value}
+                                            value={o.value}
+                                            label={o.label}
+                                        />
+                                    ))}
                                 </SingleSelect>
 
-                                {cond.rhs?.ref ? (
-                                    <>
-                                        <SingleSelect
-                                            label="Target Source"
-                                            selected={cond.rhs?.ref || ''}
-                                            onChange={({ selected }) =>
-                                                update(i, 'rhs.ref', selected)
-                                            }
-                                        >
-                                            {REF_OPTIONS.map((o) => (
-                                                <SingleSelectOption
-                                                    key={o.value}
-                                                    value={o.value}
-                                                    label={o.label}
-                                                />
-                                            ))}
-                                        </SingleSelect>
-                                        <InputField
-                                            label="Target Base UID"
-                                            value={cond.rhs?.uid || ''}
-                                            onChange={({ value }) =>
-                                                update(i, 'rhs.uid', value)
-                                            }
-                                            placeholder="e.g. LAfiAKu70JZ"
-                                        />
-                                    </>
-                                ) : (
+                                {['literal', 'context', 'constant'].includes(cond.rhs?.ref) ? (
                                     <InputField
-                                        label="Target Value"
+                                        label={cond.rhs?.ref === 'literal' ? 'Value' : 'Code / Variable'}
                                         value={cond.rhs?.value || ''}
                                         onChange={({ value }) =>
                                             update(i, 'rhs.value', value)
                                         }
-                                        placeholder="Expected value"
+                                        placeholder="Enter value"
+                                    />
+                                ) : (
+                                    <InputField
+                                        label="Target Base UID"
+                                        value={cond.rhs?.uid || ''}
+                                        onChange={({ value }) =>
+                                            update(i, 'rhs.uid', value)
+                                        }
+                                        placeholder="e.g. LAfiAKu70JZ"
                                     />
                                 )}
+
+                                <InputField
+                                    label="Target Type (Optional)"
+                                    value={cond.rhs?.type || ''}
+                                    onChange={({ value }) =>
+                                        update(i, 'rhs.type', value)
+                                    }
+                                    placeholder="e.g. integer, string"
+                                />
+
+                                <InputField
+                                    label="Target Function (Optional)"
+                                    value={cond.rhs?.fn || ''}
+                                    onChange={({ value }) =>
+                                        update(i, 'rhs.fn', value)
+                                    }
+                                    placeholder="e.g. d2:hasValue(x)"
+                                />
                             </div>
                         ) : (
                             <div style={{ flex: '1 1 30%', minWidth: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '16px', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>

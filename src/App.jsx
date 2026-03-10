@@ -1,5 +1,5 @@
 import React from 'react'
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { Sidebar } from './components/Sidebar.jsx'
 import { Dashboard } from './pages/Dashboard.jsx'
 import { WorkflowConfig } from './pages/WorkflowConfig.jsx'
@@ -9,7 +9,7 @@ import { RelationshipConfig } from './pages/RelationshipConfig.jsx'
 
 function App() {
     return (
-        <HashRouter>
+        <MemoryRouter>
             <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
                 <Sidebar />
                 <main
@@ -35,7 +35,7 @@ function App() {
                     </Routes>
                 </main>
             </div>
-        </HashRouter>
+        </MemoryRouter>
     )
 }
 

@@ -377,7 +377,6 @@ export const taskingSchema = {
                         description: '',
                         priority: 'medium',
                         singleIncomplete: false,
-                        anchorDate: '',
                         period: {
                             anchor: { ref: '', uid: '' },
                             dueInDays: 1,
@@ -430,14 +429,6 @@ export const taskingSchema = {
                             group: 'identity',
                             type: 'boolean',
                             description: 'If checked, prevents another instance of this task from being generated if one is already open.',
-                        },
-                        {
-                            key: 'anchorDate',
-                            label: 'Anchor Date',
-                            group: 'identity',
-                            type: 'string',
-                            required: true,
-                            description: 'Property or expression determining the anchor date (e.g. "enrollmentDate").',
                         },
                         {
                             key: 'period',
