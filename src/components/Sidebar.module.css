@@ -1,0 +1,138 @@
+.sidebar {
+    width: 240px;
+    min-width: 240px;
+    height: 100vh;
+    background: #1a1f2e;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 16px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.brandIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1a73e8, #0f9d58);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.brandText {
+    display: flex;
+    flex-direction: column;
+}
+
+.brandName {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.2;
+}
+
+.brandSub {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.2;
+}
+
+.section {
+    flex: 1;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sectionLabel {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.35);
+    padding: 8px 8px 6px;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.65);
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 500;
+    position: relative;
+}
+
+.navItem:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.navItemActive {
+    background: rgba(26, 115, 232, 0.2);
+    color: #89b8f7;
+}
+
+.navItemActive:hover {
+    background: rgba(26, 115, 232, 0.25);
+    color: #89b8f7;
+}
+
+.navIcon {
+    display: flex;
+    align-items: center;
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+.navLabel {
+    flex: 1;
+}
+
+.navArrow {
+    display: flex;
+    align-items: center;
+    opacity: 0.5;
+}
+
+.footer {
+    padding: 14px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.footerInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.namespace {
+    font-size: 11px;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    color: rgba(255, 255, 255, 0.6);
+    word-break: break-all;
+}
+
+.namespaceLabel {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.3);
+}
